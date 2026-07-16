@@ -151,6 +151,8 @@
   .stats{ display:flex; gap:16px; margin:10px 0; font-family:'Oswald',sans-serif; flex-wrap:wrap;}
   .stat b{display:block; font-size:18px; color:var(--ink);}
   .stat span{display:block; font-size:10.5px; color:var(--sub); letter-spacing:.05em; text-transform:uppercase;}
+  .stat.startweight{flex-basis:100%; max-width:100%;}
+  .stat.startweight b{font-size:14px; white-space:normal; line-height:1.3;}
   .cues{margin:0; padding-left:18px; color:var(--sub); font-size:12.5px; line-height:1.6;}
   .cues li{margin-bottom:3px;}
 
@@ -322,6 +324,7 @@
   <!-- ===================== 오늘 / 대시보드 ===================== -->
   <section class="tabpanel active" id="tab-today">
     <h2 class="sectitle">📍 오늘의 운동</h2>
+    <div class="note">💡 <b>추천 시작 무게</b>는 키 162cm · 체중 60.8kg · 첫 웨이트트레이닝 기준 참고값이에요. 마지막 반복 2~3개가 살짝 힘든 정도로 자세를 보며 조절하고, 통증이 있으면 더 가볍게 하세요.</div>
     <div id="todayCard"></div>
 
     <h2 class="sectitle">📊 이번주 진행률</h2>
@@ -342,6 +345,7 @@
 
   <!-- ===================== 주간운동 ===================== -->
   <section class="tabpanel" id="tab-week">
+    <div class="note">💡 <b>추천 시작 무게</b>는 키 162cm · 체중 60.8kg · 첫 웨이트트레이닝 기준 참고값이에요. 마지막 반복 2~3개가 살짝 힘든 정도로 자세를 보며 조절하고, 통증이 있으면 더 가볍게 하세요.</div>
     <div class="weekbar">
       <button class="navbtn" id="prevWeekBtn">‹</button>
       <div class="weeklabel" id="weekLabel"></div>
@@ -604,11 +608,11 @@
       summary:'벤치프레스 · 랫풀다운 · 숄더프레스 — 총 40분',
       timeline:[['11:40–11:45','웜업 (트레드밀/로잉 5분)'],['11:45–12:05','상체 근력 3종목'],['12:05–12:12','마무리 유산소 7분'],['12:12–12:17','스트레칭 5분']],
       exercises:[
-        {icon:'🏋️',pic:'benchpress',name:'벤치프레스 (스미스머신 or 플랫벤치)',equip:'가슴 · 삼두 · 어깨 전면',sets:3,reps:10,rest:'60초',
+        {icon:'🏋️',pic:'benchpress',name:'벤치프레스 (스미스머신 or 플랫벤치)',equip:'가슴 · 삼두 · 어깨 전면',sets:3,reps:10,rest:'60초',startWeight:'20kg (바 무게만)',
           cues:['벤치에 누워 어깨너비보다 살짝 넓게 바 잡기','바를 가슴 중앙까지 천천히 내렸다가 밀어올리기','손목은 꺾이지 않게 일직선 유지']},
-        {icon:'🎯',pic:'latpulldown',name:'랫풀다운 머신',equip:'등 · 광배근 · 이두',sets:3,reps:12,rest:'60초',
+        {icon:'🎯',pic:'latpulldown',name:'랫풀다운 머신',equip:'등 · 광배근 · 이두',sets:3,reps:12,rest:'60초',startWeight:'20~25kg',
           cues:['바를 어깨너비보다 넓게 잡고 앉기','가슴 쪽으로 바를 당기며 견갑골 모으기','반동 없이 등 힘으로만 천천히']},
-        {icon:'💪',pic:'shoulderpress',name:'숄더프레스 머신',equip:'어깨 (삼각근)',sets:3,reps:10,rest:'60초',
+        {icon:'💪',pic:'shoulderpress',name:'숄더프레스 머신',equip:'어깨 (삼각근)',sets:3,reps:10,rest:'60초',startWeight:'15~20kg',
           cues:['손잡이를 어깨 높이에서 시작','팔이 완전히 펴지기 직전까지 밀어올리기','허리 과신전 되지 않도록 등판에 밀착']}
       ],
       note:'상체는 주 1회뿐이니 가슴/등/어깨 순서로 밸런스 있게. 무게보다 가동범위 먼저.'
@@ -634,11 +638,11 @@
       summary:'스쿼트 · 레그프레스 · 런지 — 총 40분',
       timeline:[['11:40–11:45','웜업 (트레드밀 5분)'],['11:45–12:05','하체 근력 3종목'],['12:05–12:12','마무리 유산소 7분'],['12:12–12:17','스트레칭 5분']],
       exercises:[
-        {icon:'🏋️',pic:'squat',name:'스쿼트 (스미스머신)',equip:'허벅지 앞/뒤 · 엉덩이',sets:3,reps:10,rest:'60초',
+        {icon:'🏋️',pic:'squat',name:'스쿼트 (스미스머신)',equip:'허벅지 앞/뒤 · 엉덩이',sets:3,reps:10,rest:'60초',startWeight:'20kg (바 무게만)',
           cues:['발 어깨너비, 바를 승모근 위에 걸치기','무릎이 발끝 방향으로, 허벅지가 바닥과 평행할 때까지','처음엔 봉 무게(20kg)만으로 자세부터']},
-        {icon:'🎯',pic:'legpress',name:'레그프레스 머신',equip:'허벅지 전체',sets:3,reps:12,rest:'60초',
+        {icon:'🎯',pic:'legpress',name:'레그프레스 머신',equip:'허벅지 전체',sets:3,reps:12,rest:'60초',startWeight:'40~50kg',
           cues:['발판에 어깨너비로 발 위치, 무릎 90도까지 당기기','다리 완전히 펴지 않게(락아웃 금지) 밀어내기']},
-        {icon:'🚶',pic:'lunge',name:'덤벨 런지',equip:'허벅지 · 엉덩이 · 균형감',sets:3,repsText:'좌우 10',rest:'45초',
+        {icon:'🚶',pic:'lunge',name:'덤벨 런지',equip:'허벅지 · 엉덩이 · 균형감',sets:3,repsText:'좌우 10',rest:'45초',startWeight:'맨몸 (2주차부터 편측 3~5kg)',
           cues:['양손 덤벨, 한 발 크게 내딛고 뒷무릎 바닥 가까이','이번 주는 맨몸으로 자세부터, 다음 주 3~5kg 추가']}
       ],
       note:'첫 하체 세션은 무게 욕심 내지 말고 자세 익히는 데 집중.'
@@ -647,11 +651,11 @@
       summary:'데드리프트 · 라이트 스쿼트 · 풀업 — 총 40분',
       timeline:[['11:40–11:45','웜업 5분'],['11:45–12:05','전신 복합운동 3종목'],['12:05–12:12','가벼운 유산소 7분'],['12:12–12:17','스트레칭 5분']],
       exercises:[
-        {icon:'🏋️‍♂️',pic:'deadlift',name:'데드리프트 (스미스머신 or 바벨)',equip:'등 · 엉덩이 · 햄스트링 전신',sets:3,reps:8,rest:'90초',
+        {icon:'🏋️‍♂️',pic:'deadlift',name:'데드리프트 (스미스머신 or 바벨)',equip:'등 · 엉덩이 · 햄스트링 전신',sets:3,reps:8,rest:'90초',startWeight:'20kg (바 무게만)',
           cues:['바를 정강이에 붙인 채 허리 편 상태로 들어올리기','등이 굽으면 무게를 낮추기 — 허리 부상 위험 구간']},
-        {icon:'🦵',pic:'squat',name:'라이트 스쿼트',equip:'목요일보다 가벼운 볼륨',sets:3,reps:10,rest:'60초',
+        {icon:'🦵',pic:'squat',name:'라이트 스쿼트',equip:'목요일보다 가벼운 볼륨',sets:3,reps:10,rest:'60초',startWeight:'20kg (목요일과 동일한 바 무게)',
           cues:['목요일 하체 피로 고려해서 무게는 70~80% 수준으로']},
-        {icon:'🎯',pic:'latpulldown',name:'랫풀다운 or 어시스트 풀업',equip:'등 전체',sets:3,reps:10,rest:'60초',
+        {icon:'🎯',pic:'latpulldown',name:'랫풀다운 or 어시스트 풀업',equip:'등 전체',sets:3,reps:10,rest:'60초',startWeight:'25~30kg',
           cues:['월요일 랫풀다운보다 조금 더 무겁게, 등 볼륨 보강']}
       ],
       note:'한 주 마무리 세션. 데드리프트는 폼이 최우선, 무게는 항상 나중.'
@@ -661,7 +665,7 @@
     summary:'시간 여유 있는 날 60분 — 토 또는 일 중 하루',
     timeline:[['0:00–0:10','웜업 10분'],['0:10–0:40','근력 30분 (볼륨 보충)'],['0:40–0:55','유산소 15분'],['0:55–1:00','스트레칭 5분']],
     exercises:[
-      {icon:'🏋️',pic:'barbell',name:'컴파운드 3종 (스쿼트·벤치·데드 중 택2)',equip:'평일에 못 채운 볼륨 보충',sets:5,reps:5,rest:'90초',
+      {icon:'🏋️',pic:'barbell',name:'컴파운드 3종 (스쿼트·벤치·데드 중 택2)',equip:'평일에 못 채운 볼륨 보충',sets:5,reps:5,rest:'90초',startWeight:'평일과 동일하게 시작',
         cues:['평일보다 세트/무게를 늘려 자극을 크게 주는 날','전주 대비 조금씩 무게 증량 (점진적 과부하)']},
       {icon:'🚴',pic:'bike',name:'사이클 or 트레드밀 꾸준한 페이스',equip:'지방 연소 존 (중강도)',sets:null,extra:'15분',extraLabel:'지속',
         cues:['대화는 가능하지만 편하지는 않은 강도 유지']}
@@ -856,6 +860,7 @@
       if (ex.repsText) stats += `<div class="stat"><b>${ex.repsText}</b><span>회</span></div>`;
       if (ex.rest) stats += `<div class="stat"><b>${ex.rest}</b><span>휴식</span></div>`;
       if (ex.extra) stats += `<div class="stat"><b>${ex.extra}</b><span>${ex.extraLabel||''}</span></div>`;
+      if (ex.startWeight) stats += `<div class="stat startweight"><b style="color:${tpl.color};">${ex.startWeight}</b><span>💡 추천 시작 무게</span></div>`;
       const timerInfo = timerInfoFor(ex);
       card.innerHTML = `
         <div class="card-head">
