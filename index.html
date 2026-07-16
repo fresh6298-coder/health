@@ -227,11 +227,33 @@
   input[type=file]{font-size:12.5px; color:var(--sub);}
 
   .toast{
-    position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
+    position:fixed; left:50%; bottom:100px; transform:translateX(-50%);
     background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px;
     font-size:13px; font-weight:600; z-index:100; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+  .timerbtn{ background:none; font-family:inherit; cursor:pointer; }
+  .resttimer{
+    position:fixed; left:0; right:0; bottom:0; z-index:90;
+    background:var(--card); border-top:1px solid var(--card-line);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 20px rgba(0,0,0,0.15);
+  }
+  .resttimer .rt-bar{ height:4px; border-radius:999px; background:rgba(120,120,140,0.15); overflow:hidden; margin-bottom:10px;}
+  .resttimer .rt-bar > i{ display:block; height:100%; width:0%; background:var(--cardio); transition:width 1s linear;}
+  .resttimer .rt-main{ display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .resttimer .rt-label{ font-size:12px; color:var(--sub); margin-bottom:2px;}
+  .resttimer .rt-time{ font-size:26px; font-weight:700;}
+  .resttimer .rt-controls{ display:flex; align-items:center; gap:8px; flex:0 0 auto;}
+  .resttimer .rt-controls button{
+    font-family:'Oswald',sans-serif; font-weight:600; font-size:13px; min-width:38px; height:38px;
+    border-radius:10px; border:1px solid var(--card-line); background:transparent; color:var(--ink); cursor:pointer;
+  }
+  .resttimer .rt-controls button#rtToggle{ background:var(--ink); color:var(--bg); border-color:transparent; font-size:16px;}
+  .resttimer.done .rt-time{ color:var(--good); animation:pulse 1s ease infinite;}
+  .resttimer.done .rt-bar > i{ background:var(--good); width:100% !important;}
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.4;} }
 
   /* table */
   .tablewrap{overflow-x:auto; border:1px solid var(--card-line); border-radius:12px;}
@@ -415,6 +437,22 @@
 <footer>운동은 로컬 브라우저에만 저장됩니다 · 3개월마다 인바디 재측정 권장</footer>
 <div class="toast" id="toast"></div>
 
+<div class="resttimer" id="restTimer" hidden>
+  <div class="rt-bar"><i id="rtBarFill"></i></div>
+  <div class="rt-main">
+    <div class="rt-info">
+      <div class="rt-label" id="rtLabel"></div>
+      <div class="rt-time display" id="rtTime">00:00</div>
+    </div>
+    <div class="rt-controls">
+      <button type="button" id="rtMinus" title="10초 감소">-10</button>
+      <button type="button" id="rtToggle" title="일시정지/재개">⏸</button>
+      <button type="button" id="rtPlus" title="10초 추가">+10</button>
+      <button type="button" id="rtClose" title="닫기">✕</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   'use strict';
@@ -447,6 +485,73 @@
     clearTimeout(toast._h);
     toast._h = setTimeout(()=>t.classList.remove('show'), 2200);
   }
+
+  /* ---------------- rest timer ---------------- */
+  const rt = { total:0, remaining:0, timerId:null, paused:false, label:'' };
+  const rtEl = document.getElementById('restTimer');
+  const rtTimeEl = document.getElementById('rtTime');
+  const rtLabelEl = document.getElementById('rtLabel');
+  const rtBarFillEl = document.getElementById('rtBarFill');
+  const rtToggleBtn = document.getElementById('rtToggle');
+
+  function startRestTimer(seconds, label){
+    clearInterval(rt.timerId);
+    rt.total = seconds; rt.remaining = seconds; rt.label = label; rt.paused = false;
+    rtEl.hidden = false;
+    rtEl.classList.remove('done');
+    rtToggleBtn.textContent = '⏸';
+    updateRestTimerUI();
+    rt.timerId = setInterval(tickRestTimer, 1000);
+  }
+  function tickRestTimer(){
+    if (rt.paused) return;
+    rt.remaining--;
+    if (rt.remaining <= 0){
+      rt.remaining = 0;
+      updateRestTimerUI();
+      clearInterval(rt.timerId);
+      onRestTimerDone();
+      return;
+    }
+    updateRestTimerUI();
+  }
+  function updateRestTimerUI(){
+    const m = Math.floor(rt.remaining/60), s = rt.remaining%60;
+    rtTimeEl.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    rtLabelEl.textContent = rt.label;
+    const pct = rt.total ? Math.max(0, Math.min(100, (1 - rt.remaining/rt.total)*100)) : 0;
+    rtBarFillEl.style.width = pct + '%';
+  }
+  function onRestTimerDone(){
+    rtEl.classList.add('done');
+    rtTimeEl.textContent = '완료!';
+    beep();
+    if (navigator.vibrate) navigator.vibrate([200,100,200]);
+    setTimeout(()=>{ if (rt.remaining<=0) rtEl.hidden = true; rtEl.classList.remove('done'); }, 4000);
+  }
+  function beep(){
+    try{
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx();
+      [0, 0.3].forEach((delay)=>{
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = 880;
+        o.connect(g); g.connect(ctx.destination);
+        const t0 = ctx.currentTime + delay;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.3, t0+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+0.25);
+        o.start(t0); o.stop(t0+0.3);
+      });
+    }catch(e){}
+  }
+  document.getElementById('rtToggle').addEventListener('click', ()=>{
+    rt.paused = !rt.paused;
+    rtToggleBtn.textContent = rt.paused ? '▶' : '⏸';
+  });
+  document.getElementById('rtPlus').addEventListener('click', ()=>{ rt.remaining += 10; rt.total += 10; updateRestTimerUI(); });
+  document.getElementById('rtMinus').addEventListener('click', ()=>{ rt.remaining = Math.max(0, rt.remaining-10); updateRestTimerUI(); });
+  document.getElementById('rtClose').addEventListener('click', ()=>{ clearInterval(rt.timerId); rtEl.hidden = true; });
 
   /* ---------------- theme ---------------- */
   const themeBtn = document.getElementById('themeBtn');
@@ -725,6 +830,7 @@
       if (ex.repsText) stats += `<div class="stat"><b>${ex.repsText}</b><span>회</span></div>`;
       if (ex.rest) stats += `<div class="stat"><b>${ex.rest}</b><span>휴식</span></div>`;
       if (ex.extra) stats += `<div class="stat"><b>${ex.extra}</b><span>${ex.extraLabel||''}</span></div>`;
+      const timerInfo = timerInfoFor(ex);
       card.innerHTML = `
         <div class="card-head">
           <div class="idx" style="--accent:${tpl.color};color:${tpl.color};">${idx+1}</div>
@@ -736,6 +842,7 @@
         <div class="reflinks">
           <a class="reflink" href="${ytSearchUrl(ex)}" target="_blank" rel="noopener noreferrer">▶️ 유튜브로 자세 보기</a>
           <a class="reflink" href="${imgSearchUrl(ex)}" target="_blank" rel="noopener noreferrer">🖼️ 기구 사진 보기</a>
+          ${timerInfo ? `<button type="button" class="reflink timerbtn">⏱️ ${fmtDuration(timerInfo.seconds)} 타이머</button>` : ''}
         </div>
         <div class="checkbox-row">
           <input type="checkbox" id="ex-${iso}-${idx}" ${done?'checked':''} style="--accent:${tpl.color};">
@@ -748,6 +855,10 @@
         save(LS.WORKOUT, workoutLog);
         refreshAllViews();
       });
+      const timerBtn = card.querySelector('.timerbtn');
+      if (timerBtn && timerInfo){
+        timerBtn.addEventListener('click', ()=> startRestTimer(timerInfo.seconds, timerInfo.label));
+      }
       wrapper.appendChild(card);
     });
 
@@ -757,6 +868,23 @@
     wrapper.appendChild(note);
     return wrapper;
   }
+
+  function parseDurationSeconds(str){
+    if (!str) return null;
+    const s = String(str);
+    const mm = s.match(/(\d+)\s*분/);
+    const ss = s.match(/(\d+)\s*초/);
+    if (!mm && !ss) return null;
+    return (mm ? parseInt(mm[1],10)*60 : 0) + (ss ? parseInt(ss[1],10) : 0);
+  }
+  function timerInfoFor(ex){
+    const fromRest = parseDurationSeconds(ex.rest);
+    if (fromRest) return { seconds: fromRest, label: `${ex.name} · 세트 휴식` };
+    const fromExtra = parseDurationSeconds(ex.extra);
+    if (fromExtra) return { seconds: fromExtra, label: `${ex.name}${ex.extraLabel? ' · '+ex.extraLabel : ''}` };
+    return null;
+  }
+  function fmtDuration(sec){ return sec>=60 ? `${Math.round(sec/60)}분` : `${sec}초`; }
 
   function cleanExName(name){ return name.replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
   function ytSearchUrl(ex){
