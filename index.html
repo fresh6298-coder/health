@@ -148,6 +148,14 @@
   .cues{margin:0; padding-left:18px; color:var(--sub); font-size:12.5px; line-height:1.6;}
   .cues li{margin-bottom:3px;}
 
+  .reflinks{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .reflink{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+    padding:7px 12px; border-radius:999px; border:1px solid var(--card-line);
+    background:rgba(120,120,140,0.06); color:var(--ink); text-decoration:none;
+  }
+  .reflink:hover{background:rgba(120,120,140,0.14);}
+
   .checkbox-row{
     display:flex; align-items:center; gap:10px; margin-top:10px; padding-top:10px;
     border-top:1px dashed var(--card-line);
@@ -725,6 +733,10 @@
         </div>
         <div class="stats">${stats}</div>
         <ul class="cues">${ex.cues.map(c=>`<li>${c}</li>`).join('')}</ul>
+        <div class="reflinks">
+          <a class="reflink" href="${ytSearchUrl(ex)}" target="_blank" rel="noopener noreferrer">▶️ 유튜브로 자세 보기</a>
+          <a class="reflink" href="${imgSearchUrl(ex)}" target="_blank" rel="noopener noreferrer">🖼️ 기구 사진 보기</a>
+        </div>
         <div class="checkbox-row">
           <input type="checkbox" id="ex-${iso}-${idx}" ${done?'checked':''} style="--accent:${tpl.color};">
           <label for="ex-${iso}-${idx}">완료 체크</label>
@@ -744,6 +756,16 @@
     note.innerHTML = `<b>포인트</b> · ${tpl.note}`;
     wrapper.appendChild(note);
     return wrapper;
+  }
+
+  function cleanExName(name){ return name.replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
+  function ytSearchUrl(ex){
+    const q = `${cleanExName(ex.name)} 자세 방법`;
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+  }
+  function imgSearchUrl(ex){
+    const q = `${cleanExName(ex.name)} ${ex.equip||''}`.trim();
+    return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`;
   }
 
   function hexAlpha(hex, a){
