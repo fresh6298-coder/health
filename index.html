@@ -301,6 +301,22 @@
   .chart-tip.show{opacity:1;}
   .chart-empty{color:var(--sub); font-size:13px; text-align:center; padding:30px 0;}
 
+  .weekcard-head{display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;}
+  .weekcard-head .wk-range{font-family:'Oswald',sans-serif; font-weight:700; font-size:15px;}
+  .weekcard-head .wk-right{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
+  .weekcard-head .wk-ratio{font-family:'Oswald',sans-serif; font-size:13px; color:var(--sub);}
+  .weekcard-head .wk-chevron{color:var(--sub); transition:transform .15s ease; font-size:12px;}
+  .weekcard.expanded .wk-chevron{transform:rotate(180deg);}
+  .weekcard-body{display:none; margin-top:14px; padding-top:12px; border-top:1px dashed var(--card-line);}
+  .weekcard.expanded .weekcard-body{display:block;}
+  .wk-daylist{display:flex; flex-direction:column; gap:10px;}
+  .wk-day{display:flex; align-items:flex-start; gap:10px; font-size:12.5px;}
+  .wk-day .wk-daylabel{width:46px; flex:0 0 auto; font-family:'Oswald',sans-serif; font-weight:700; color:var(--ink);}
+  .wk-day .wk-status{flex:0 0 auto; width:20px; text-align:center;}
+  .wk-day .wk-detail{color:var(--sub); flex:1; line-height:1.5;}
+  .wk-day .wk-detail b{color:var(--ink);}
+  .wk-day .wk-exlist{margin-top:2px; font-size:11px; color:var(--sub); opacity:.85;}
+
   .segrow{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 16px;}
   .segbtn{
     font-family:'Oswald',sans-serif; font-size:12.5px; font-weight:600; padding:7px 13px;
@@ -328,6 +344,7 @@
 <nav class="maintabs" id="mainTabs">
   <button class="tabbtn active" data-tab="today">📍 오늘</button>
   <button class="tabbtn" data-tab="week">🗓️ 주간운동</button>
+  <button class="tabbtn" data-tab="history">🗂️ 기록</button>
   <button class="tabbtn" data-tab="inbody">📈 인바디</button>
   <button class="tabbtn" data-tab="settings">⚙️ 설정</button>
 </nav>
@@ -369,6 +386,12 @@
     </div>
     <nav class="days" id="dayNav"></nav>
     <div id="dayPanelWrap"></div>
+  </section>
+
+  <!-- ===================== 기록 ===================== -->
+  <section class="tabpanel" id="tab-history">
+    <h2 class="sectitle">🗂️ 주차별 운동 기록</h2>
+    <div id="historyList"></div>
   </section>
 
   <!-- ===================== 인바디 ===================== -->
@@ -768,6 +791,78 @@
     const weekendDone = satDone || sunDone;
     const completed = [monDone,tueDone,thuDone,friDone,weekendDone].filter(Boolean).length;
     return { completed, total: goals.sessions || 5 };
+  }
+
+  /* ---------------- render: history (weekly list w/ daily detail) ---------------- */
+  function getLoggedWeeks(){
+    const mondays = new Set();
+    mondays.add(toISO(mondayOf(todayDate)));
+    Object.keys(workoutLog).forEach(iso=>{
+      const st = workoutLog[iso];
+      const hasAny = (st.ex && Object.values(st.ex).some(Boolean)) || st.restDone;
+      if (hasAny) mondays.add(toISO(mondayOf(fromISO(iso))));
+    });
+    return Array.from(mondays).sort().reverse();
+  }
+  function dayStatusInfo(iso, dayKey){
+    const tpl = tplFor(dayKey);
+    const isFuture = iso > todayISO;
+    const st = workoutLog[iso];
+    if (tpl.isRest){
+      const done = !!(st && st.restDone);
+      return { icon: done ? '✅' : (isFuture ? '·' : '➖'), detail: done ? '휴식 (가벼운 산책 완료)' : '휴식일', exNames: [] };
+    }
+    const exs = effectiveExercises(tpl);
+    const total = exs.length;
+    let doneCount = 0;
+    const exNames = exs.map((ex, idx)=>{
+      const checked = !!(st && st.ex && st.ex[idx]);
+      if (checked) doneCount++;
+      return `${checked ? '✔' : '·'} ${ex.name}`;
+    });
+    let icon;
+    if (doneCount === total && total > 0) icon = '✅';
+    else if (doneCount > 0) icon = '🟡';
+    else icon = isFuture ? '·' : '⬜';
+    return { icon, detail: `${doneCount}/${total} 완료`, exNames };
+  }
+  function renderHistoryTab(){
+    const el = document.getElementById('historyList');
+    const weeks = getLoggedWeeks();
+    const curMondayISO = toISO(mondayOf(todayDate));
+    el.innerHTML = weeks.map(mondayISO=>{
+      const monday = fromISO(mondayISO);
+      const ws = weekStats(monday);
+      const ratio = ws.total ? Math.round(ws.completed/ws.total*100) : 0;
+      const rangeLabel = `${monday.getMonth()+1}/${monday.getDate()} – ${addDays(monday,6).getMonth()+1}/${addDays(monday,6).getDate()}`;
+      const isCurrentWeek = mondayISO === curMondayISO;
+      const daysHtml = WEEK_ORDER.map((dk, offset)=>{
+        const date = addDays(monday, offset);
+        const iso = toISO(date);
+        const tpl = tplFor(dk);
+        const info = dayStatusInfo(iso, dk);
+        const exList = info.exNames.length ? `<div class="wk-exlist">${info.exNames.join(' · ')}</div>` : '';
+        return `<div class="wk-day">
+          <div class="wk-daylabel">${DOW_LABEL[dk]} ${date.getDate()}</div>
+          <div class="wk-status">${info.icon}</div>
+          <div class="wk-detail"><b>${tpl.tag}</b> · ${info.detail}${exList}</div>
+        </div>`;
+      }).join('');
+      return `<div class="card weekcard${isCurrentWeek ? ' expanded' : ''}" data-week="${mondayISO}">
+        <div class="weekcard-head">
+          <div class="wk-range display">${rangeLabel}${isCurrentWeek ? ' (이번주)' : ''}</div>
+          <div class="wk-right">
+            <div class="wk-ratio">${ws.completed}/${ws.total}</div>
+            <div class="wk-chevron">▾</div>
+          </div>
+        </div>
+        <div class="progressbar" style="margin:8px 0 0;"><i style="width:${ratio}%; background:${ratio>=100?'var(--good)':'var(--strength)'};"></i></div>
+        <div class="weekcard-body"><div class="wk-daylist">${daysHtml}</div></div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('.weekcard-head').forEach(head=>{
+      head.addEventListener('click', ()=> head.closest('.weekcard').classList.toggle('expanded'));
+    });
   }
 
   /* ---------------- render: today ---------------- */
@@ -1385,6 +1480,7 @@
     renderWeekLabel();
     renderDayNav();
     renderDayPanelWrap();
+    renderHistoryTab();
     renderCharts();
     renderInbodyTable();
   }
